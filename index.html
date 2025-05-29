@@ -1,14 +1,108 @@
-html
-
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-<meta charset="UTF-8">
-<title>Minha Primeira Página</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fortnite Stats Simulator</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+        .container {
+            background-color: rgba(0, 0, 0, 0.7);
+            border-radius: 15px;
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+        button {
+            background-color: #FF4500;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: scale(1.05);
+            background-color: #FF6347;
+        }
+        #lootResult {
+            margin: 20px;
+            padding: 10px;
+            border: 2px dashed gold;
+            min-height: 50px;
+        }
+    </style>
 </head>
 <body>
+    <div class="container">
+        <h1>Fortnite Stats Simulator</h1>
+        
+        <h2>Contador de Vitórias</h2>
+        <p id="wins">0</p>
+        <button onclick="addWin()">Adicionar Vitória!</button>
+        
+        <h2>Simulador de Loot</h2>
+        <button onclick="openLoot()">Abrir Baú!</button>
+        <div id="lootResult">Clique no baú para ver o que você ganhou!</div>
+    </div>
 
-<h1>Guilherme Carvalho Chimanski 2C</h1>
-<p>Esta é minha primeira página publicada no GitHub Pages.</p>
+    <script>
+        // Contador de vitórias
+        let wins = 0;
+        function addWin() {
+            wins++;
+            document.getElementById('wins').textContent = wins;
+        }
+
+        // Simulador de loot
+        const lootItems = [
+            "Pistola Comum",
+            "Fuzil Épico (SCAR)",
+            "Sniper Lendária",
+            "Poção de Escudo",
+            "Granadas",
+            "Míticas: Espada do Thanos!",
+            "Balões de Fumaça",
+            "Arco Épico",
+            "Colete de Vida Raro"
+        ];
+
+        function openLoot() {
+            const resultDiv = document.getElementById('lootResult');
+            // Efeito de "carregamento"
+            resultDiv.textContent = "Abrindo...";
+            
+            setTimeout(() => {
+                const randomIndex = Math.floor(Math.random() * lootItems.length);
+                const rarityColors = {
+                    "Comum": "gray",
+                    "Raro": "blue",
+                    "Épico": "purple",
+                    "Lendária": "gold",
+                    "Míticas": "orange"
+                };
+                
+                const item = lootItems[randomIndex];
+                let rarity = "Comum";
+                
+                if (item.includes("Épico")) rarity = "Épico";
+                else if (item.includes("Raro")) rarity = "Raro";
+                else if (item.includes("Lendária")) rarity = "Lendária";
+                else if (item.includes("Míticas")) rarity = "Míticas";
+                
+                resultDiv.innerHTML = `<span style="color: ${rarityColors[rarity]}; font-weight: bold;">${item}</span>`;
+            }, 1000);
+        }
+    </script>
 </body>
 </html>
