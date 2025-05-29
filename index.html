@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulador de Construção - Fortnite</title>
+    <title>Simulador de Batalha Aérea - War Thunder</title>
     <style>
         body {
             font-family: 'Arial', sans-serif;
-            background: linear-gradient(to bottom, #4b6cb7, #182848);
+            background: url('https://i.imgur.com/XsYjq02.jpg') no-repeat center center fixed;
+            background-size: cover;
             color: white;
             text-align: center;
             margin: 0;
@@ -15,275 +16,402 @@
             overflow-x: hidden;
         }
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
-            background-color: rgba(0, 0, 0, 0.7);
+            background-color: rgba(0, 0, 0, 0.8);
             border-radius: 15px;
             padding: 20px;
-            box-shadow: 0 0 30px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.7);
+            border: 2px solid #5d5d5d;
         }
         h1 {
             color: #f7d417;
             text-shadow: 0 0 10px rgba(247, 212, 23, 0.5);
+            margin-bottom: 30px;
         }
-        .resources {
+        .dashboard {
             display: flex;
-            justify-content: space-around;
-            margin: 20px 0;
-            font-size: 18px;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
         }
-        .resource {
-            padding: 10px 20px;
+        .player-stats, .enemy-stats {
+            background-color: rgba(50, 50, 50, 0.7);
+            padding: 15px;
             border-radius: 10px;
-            background-color: rgba(255, 255, 255, 0.1);
+            width: 48%;
+            min-width: 300px;
+            margin-bottom: 15px;
         }
-        .build-buttons {
+        .health-bar, .ammo-bar {
+            height: 20px;
+            background-color: #333;
+            border-radius: 10px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        #playerHealth, #enemyHealth {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(to right, #4CAF50, #8BC34A);
+            transition: width 0.5s;
+        }
+        #enemyHealth {
+            background: linear-gradient(to right, #F44336, #FF9800);
+        }
+        #playerAmmo, #playerFuel {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(to right, #2196F3, #03A9F4);
+            transition: width 0.5s;
+        }
+        .controls {
             display: flex;
             justify-content: center;
             flex-wrap: wrap;
             gap: 15px;
             margin: 30px 0;
         }
-        .build-btn {
-            background: linear-gradient(135deg, #667eea, #764ba2);
+        .control-btn {
+            background: linear-gradient(135deg, #ff8a00, #e52e71);
             border: none;
             color: white;
-            padding: 15px 25px;
-            border-radius: 50px;
+            padding: 12px 25px;
+            border-radius: 5px;
             cursor: pointer;
             font-size: 16px;
             font-weight: bold;
             transition: all 0.3s;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            min-width: 150px;
         }
-        .build-btn:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+        .control-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
         }
-        .build-btn:disabled {
+        .control-btn:disabled {
             background: #666;
             transform: none;
             box-shadow: none;
             cursor: not-allowed;
         }
-        .construction-area {
-            height: 300px;
-            width: 100%;
-            background-color: rgba(255, 255, 255, 0.05);
-            border: 2px dashed rgba(255, 255, 255, 0.2);
-            border-radius: 10px;
-            margin: 20px 0;
+        .battle-log {
+            height: 200px;
+            overflow-y: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+            border: 1px solid #444;
+            border-radius: 5px;
+            padding: 15px;
+            text-align: left;
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+        }
+        .critical-hit {
+            color: #ff5252;
+            font-weight: bold;
+        }
+        .ammo-warning {
+            color: #ffeb3b;
+            font-weight: bold;
+        }
+        .repair-info {
+            color: #4caf50;
+            font-weight: bold;
+        }
+        .plane-icon {
+            font-size: 40px;
+            margin: 10px;
+        }
+        .battle-area {
             position: relative;
+            height: 200px;
+            margin: 30px 0;
+            background-color: rgba(70, 70, 70, 0.3);
+            border-radius: 10px;
             overflow: hidden;
         }
-        .structure {
+        .plane {
             position: absolute;
-            transition: all 0.5s;
+            font-size: 30px;
+            transition: all 1s;
         }
-        .wall {
-            background-color: rgba(255, 255, 255, 0.8);
-            border: 2px solid #ddd;
+        #playerPlane {
+            left: 20%;
+            bottom: 50px;
         }
-        .ramp {
-            background: linear-gradient(to bottom right, transparent 49%, rgba(255, 255, 255, 0.8) 50%);
+        #enemyPlane {
+            right: 20%;
+            top: 50px;
+            transform: scaleX(-1);
         }
-        .floor {
-            background-color: rgba(255, 255, 255, 0.6);
-        }
-        .edit-btn {
-            background: linear-gradient(135deg, #f7d417, #f5a623);
-            margin-top: 20px;
-        }
-        .harvest-btn {
-            background: linear-gradient(135deg, #4CAF50, #2E8B57);
-            margin-top: 10px;
-        }
-        .notification {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 15px 30px;
-            border-radius: 50px;
-            z-index: 100;
+        .damage-effect {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 0, 0, 0.3);
             opacity: 0;
-            transition: opacity 0.5s;
+            pointer-events: none;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🏗️ Simulador de Construção - Fortnite</h1>
+        <h1>✈️ Simulador de Batalha Aérea - War Thunder</h1>
         
-        <div class="resources">
-            <div class="resource">Madeira: <span id="wood">200</span></div>
-            <div class="resource">Pedra: <span id="stone">150</span></div>
-            <div class="resource">Metal: <span id="metal">100</span></div>
+        <div class="dashboard">
+            <div class="player-stats">
+                <h2>Seu Caça (P-51D Mustang)</h2>
+                <div class="plane-icon">✈️</div>
+                <p>Integridade: <span id="playerHealthValue">100</span>%</p>
+                <div class="health-bar">
+                    <div id="playerHealth" style="width: 100%;"></div>
+                </div>
+                <p>Munição: <span id="playerAmmoValue">100</span>%</p>
+                <div class="ammo-bar">
+                    <div id="playerAmmo" style="width: 100%;"></div>
+                </div>
+                <p>Combustível: <span id="playerFuelValue">100</span>%</p>
+                <div class="ammo-bar">
+                    <div id="playerFuel" style="width: 100%;"></div>
+                </div>
+            </div>
+            
+            <div class="enemy-stats">
+                <h2>Inimigo (Bf 109 G-6)</h2>
+                <div class="plane-icon">✈️</div>
+                <p>Integridade: <span id="enemyHealthValue">100</span>%</p>
+                <div class="health-bar">
+                    <div id="enemyHealth" style="width: 100%;"></div>
+                </div>
+                <p>Estado: <span id="enemyStatus">Operacional</span></p>
+            </div>
         </div>
         
-        <div class="build-buttons">
-            <button class="build-btn" onclick="build('wall')">🧱 Parede (10 madeira)</button>
-            <button class="build-btn" onclick="build('ramp')">🔼 Rampa (15 madeira)</button>
-            <button class="build-btn" onclick="build('floor')">📦 Piso (20 pedra)</button>
-            <button class="build-btn" onclick="build('tower')">🏰 Torre (30 pedra)</button>
-            <button class="build-btn edit-btn" onclick="editMode()">✏️ Modo Edição</button>
-            <button class="build-btn harvest-btn" onclick="harvest()">⛏️ Coletar Materiais (+50)</button>
+        <div class="battle-area">
+            <div id="playerPlane" class="plane">✈️</div>
+            <div id="enemyPlane" class="plane">✈️</div>
+            <div id="damageEffect" class="damage-effect"></div>
         </div>
         
-        <div class="construction-area" id="constructionArea"></div>
+        <div class="controls">
+            <button class="control-btn" onclick="attack('machinegun')">🔫 Metralhadoras (1% munição)</button>
+            <button class="control-btn" onclick="attack('cannon')">💥 Canhão (5% munição)</button>
+            <button class="control-btn" onclick="maneuver('evade')">🔄 Manobra Evasiva</button>
+            <button class="control-btn" onclick="maneuver('pursuit')">🎯 Perseguição</button>
+            <button class="control-btn" onclick="repair()">🔧 Reparar (20s)</button>
+        </div>
+        
+        <div class="battle-log" id="battleLog">
+            Batalha iniciada! Encontramos um caça inimigo.
+        </div>
     </div>
-    
-    <div class="notification" id="notification"></div>
 
     <script>
-        let resources = {
-            wood: 200,
-            stone: 150,
-            metal: 100
+        // Status do jogador
+        const player = {
+            health: 100,
+            ammo: 100,
+            fuel: 100,
+            isRepairing: false,
+            plane: 'P-51D Mustang',
+            weapons: {
+                machinegun: { damage: 2, ammoCost: 1 },
+                cannon: { damage: 8, ammoCost: 5 }
+            }
         };
         
-        let editModeActive = false;
-        let structureCount = 0;
+        // Status do inimigo
+        const enemy = {
+            health: 100,
+            plane: 'Bf 109 G-6',
+            accuracy: 0.4,
+            attackInterval: null
+        };
         
-        function updateResources() {
-            document.getElementById('wood').textContent = resources.wood;
-            document.getElementById('stone').textContent = resources.stone;
-            document.getElementById('metal').textContent = resources.metal;
+        // Inicia o ataque inimigo
+        enemy.attackInterval = setInterval(enemyAttack, 3000);
+        
+        // Atualiza a interface
+        function updateUI() {
+            document.getElementById('playerHealthValue').textContent = player.health;
+            document.getElementById('playerHealth').style.width = `${player.health}%`;
+            document.getElementById('playerAmmoValue').textContent = player.ammo;
+            document.getElementById('playerAmmo').style.width = `${player.ammo}%`;
+            document.getElementById('playerFuelValue').textContent = player.fuel;
+            document.getElementById('playerFuel').style.width = `${player.fuel}%`;
+            
+            document.getElementById('enemyHealthValue').textContent = enemy.health;
+            document.getElementById('enemyHealth').style.width = `${enemy.health}%`;
+            
+            // Desativa botões se necessário
+            document.querySelectorAll('.control-btn').forEach(btn => {
+                if (player.health <= 0 || enemy.health <= 0) {
+                    btn.disabled = true;
+                }
+            });
+            
+            // Verifica combustível
+            if (player.fuel <= 0) {
+                addToLog("⚠️ SEM COMBUSTÍVEL! Você está caindo!", "ammo-warning");
+                player.health = 0;
+                updateUI();
+            }
         }
         
-        function showNotification(message) {
-            const notification = document.getElementById('notification');
-            notification.textContent = message;
-            notification.style.opacity = 1;
-            
-            setTimeout(() => {
-                notification.style.opacity = 0;
-            }, 2000);
+        // Adiciona mensagem ao log
+        function addToLog(message, className = "") {
+            const log = document.getElementById('battleLog');
+            const entry = document.createElement('div');
+            entry.className = className;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
         }
         
-        function build(type) {
-            let cost = {};
-            let structureClass = '';
-            let structureHtml = '';
-            let width = 0, height = 0;
-            
-            switch(type) {
-                case 'wall':
-                    if (resources.wood < 10) {
-                        showNotification("❌ Madeira insuficiente!");
-                        return;
-                    }
-                    cost.wood = 10;
-                    structureClass = 'wall';
-                    width = 80;
-                    height = 120;
-                    structureHtml = '🧱';
-                    break;
-                    
-                case 'ramp':
-                    if (resources.wood < 15) {
-                        showNotification("❌ Madeira insuficiente!");
-                        return;
-                    }
-                    cost.wood = 15;
-                    structureClass = 'ramp';
-                    width = 120;
-                    height = 80;
-                    structureHtml = '🔼';
-                    break;
-                    
-                case 'floor':
-                    if (resources.stone < 20) {
-                        showNotification("❌ Pedra insuficiente!");
-                        return;
-                    }
-                    cost.stone = 20;
-                    structureClass = 'floor';
-                    width = 150;
-                    height = 150;
-                    structureHtml = '📦';
-                    break;
-                    
-                case 'tower':
-                    if (resources.stone < 30) {
-                        showNotification("❌ Pedra insuficiente!");
-                        return;
-                    }
-                    cost.stone = 30;
-                    structureClass = 'wall';
-                    width = 100;
-                    height = 200;
-                    structureHtml = '🏰';
-                    break;
+        // Ataque do jogador
+        function attack(type) {
+            if (player.ammo <= 0) {
+                addToLog("SEM MUNIÇÃO! Recarregue ou use outra arma.", "ammo-warning");
+                return;
             }
             
-            // Deduz recursos
-            for (const [material, amount] of Object.entries(cost)) {
-                resources[material] -= amount;
-            }
-            updateResources();
+            const weapon = player.weapons[type];
+            let damage = weapon.damage;
             
-            // Cria estrutura
-            const constructionArea = document.getElementById('constructionArea');
-            const structure = document.createElement('div');
-            structure.className = `structure ${structureClass}`;
-            structure.id = `structure-${structureCount++}`;
-            structure.innerHTML = structureHtml;
-            
-            // Posição aleatória
-            const maxX = constructionArea.offsetWidth - width;
-            const maxY = constructionArea.offsetHeight - height;
-            
-            structure.style.width = `${width}px`;
-            structure.style.height = `${height}px`;
-            structure.style.left = `${Math.random() * maxX}px`;
-            structure.style.top = `${Math.random() * maxY}px`;
-            
-            if (editModeActive) {
-                structure.style.cursor = 'pointer';
-                structure.onclick = function() {
-                    this.remove();
-                    // Devolve 50% dos recursos
-                    for (const [material, amount] of Object.entries(cost)) {
-                        resources[material] += Math.floor(amount * 0.5);
-                    }
-                    updateResources();
-                    showNotification("♻️ Estrutura destruída! 50% dos materiais recuperados");
-                };
-            }
-            
-            constructionArea.appendChild(structure);
-            showNotification(`✅ ${type} construído!`);
-        }
-        
-        function editMode() {
-            editModeActive = !editModeActive;
-            const structures = document.querySelectorAll('.structure');
-            
-            if (editModeActive) {
-                showNotification("✏️ Modo edição ativado - Clique nas estruturas para remover");
-                structures.forEach(struct => {
-                    struct.style.cursor = 'pointer';
-                    struct.style.boxShadow = '0 0 10px yellow';
-                });
+            // Chance de crítico (20%)
+            if (Math.random() < 0.2) {
+                damage *= 1.5;
+                damage = Math.floor(damage);
+                addToLog(`CRÍTICO! Você causou ${damage} de dano com ${type === 'machinegun' ? 'metralhadoras' : 'canhão'}!`, "critical-hit");
             } else {
-                showNotification("🚧 Modo edição desativado");
-                structures.forEach(struct => {
-                    struct.style.cursor = 'default';
-                    struct.style.boxShadow = 'none';
-                });
+                addToLog(`Você causou ${damage} de dano com ${type === 'machinegun' ? 'metralhadoras' : 'canhão'}.`);
+            }
+            
+            enemy.health -= damage;
+            player.ammo -= weapon.ammoCost;
+            
+            // Efeito visual
+            const enemyPlane = document.getElementById('enemyPlane');
+            enemyPlane.style.transform = 'scaleX(-1) translateY(-20px)';
+            setTimeout(() => {
+                enemyPlane.style.transform = 'scaleX(-1)';
+            }, 300);
+            
+            // Verifica se inimigo foi abatido
+            if (enemy.health <= 0) {
+                enemy.health = 0;
+                document.getElementById('enemyStatus').textContent = "Abatido";
+                clearInterval(enemy.attackInterval);
+                addToLog("🎉 INIMIGO ABATIDO! MISSÃO CUMPRIDA!", "critical-hit");
+            }
+            
+            updateUI();
+        }
+        
+        // Ataque do inimigo
+        function enemyAttack() {
+            if (enemy.health <= 0 || player.health <= 0) return;
+            
+            // Chance de acerto baseada na precisão do inimigo
+            if (Math.random() < enemy.accuracy) {
+                const damage = Math.floor(Math.random() * 15) + 5;
+                player.health -= damage;
+                
+                // Efeito visual de dano
+                const damageEffect = document.getElementById('damageEffect');
+                damageEffect.style.opacity = 1;
+                setTimeout(() => {
+                    damageEffect.style.opacity = 0;
+                }, 300);
+                
+                addToLog(`Inimigo te atingiu! Você perdeu ${damage}% de integridade.`, "critical-hit");
+                
+                // Movimento do avião inimigo
+                const enemyPlane = document.getElementById('enemyPlane');
+                enemyPlane.style.transform = 'scaleX(-1) translateY(20px)';
+                setTimeout(() => {
+                    enemyPlane.style.transform = 'scaleX(-1)';
+                }, 300);
+                
+                // Verifica se jogador foi abatido
+                if (player.health <= 0) {
+                    player.health = 0;
+                    addToLog("💥 SEU AVIÃO FOI DESTRUÍDO!", "critical-hit");
+                }
+                
+                updateUI();
+            } else {
+                addToLog("Inimigo disparou, mas errou!");
             }
         }
         
-        function harvest() {
-            resources.wood += 50;
-            resources.stone += 50;
-            resources.metal += 50;
-            updateResources();
-            showNotification("⛏️ +50 materiais de todos os tipos!");
+        // Manobras
+        function maneuver(type) {
+            if (player.fuel <= 0) return;
+            
+            player.fuel -= 2;
+            
+            if (type === 'evade') {
+                enemy.accuracy = 0.2; // Reduz precisão inimiga temporariamente
+                addToLog("Você realizou uma manobra evasiva! Inimigo terá mais dificuldade em te acertar.");
+                
+                // Efeito visual
+                const playerPlane = document.getElementById('playerPlane');
+                playerPlane.style.transform = 'rotate(30deg)';
+                setTimeout(() => {
+                    playerPlane.style.transform = 'rotate(0)';
+                }, 500);
+                
+                setTimeout(() => {
+                    enemy.accuracy = 0.4;
+                }, 3000);
+            } else {
+                enemy.accuracy = 0.6; // Aumenta chance de acerto do jogador
+                addToLog("Você entrou em perseguição! Sua próxima chance de acerto aumenta.");
+                
+                setTimeout(() => {
+                    enemy.accuracy = 0.4;
+                }, 2000);
+            }
+            
+            updateUI();
         }
+        
+        // Reparo
+        function repair() {
+            if (player.isRepairing) return;
+            
+            player.isRepairing = true;
+            const repairTime = 20000; // 20 segundos
+            const startTime = Date.now();
+            
+            addToLog("Iniciando reparos (20 segundos)...", "repair-info");
+            
+            const repairInterval = setInterval(() => {
+                const elapsed = Date.now() - startTime;
+                const remaining = Math.max(0, repairTime - elapsed);
+                
+                if (remaining <= 0) {
+                    clearInterval(repairInterval);
+                    player.health = Math.min(100, player.health + 40);
+                    player.isRepairing = false;
+                    addToLog("Reparos completos! +40% de integridade.", "repair-info");
+                    updateUI();
+                }
+            }, 1000);
+        }
+        
+        // Consumo de combustível
+        setInterval(() => {
+            if (player.health > 0 && enemy.health > 0) {
+                player.fuel -= 0.5;
+                updateUI();
+                
+                if (player.fuel <= 20 && player.fuel > 0) {
+                    addToLog("⚠️ ATENÇÃO: Combustível acabando!", "ammo-warning");
+                }
+            }
+        }, 1000);
     </script>
 </body>
 </html>
