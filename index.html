@@ -3,415 +3,477 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulador de Batalha Aérea - War Thunder</title>
+    <title>War Thunder - Enciclopédia de Veículos</title>
     <style>
+        :root {
+            --usa-blue: #0d5eaf;
+            --germany-gray: #666666;
+            --ussr-red: #d52b1e;
+            --britain-green: #004d33;
+            --japan-white: #f0f0f0;
+            --japan-red: #bc002d;
+        }
+        
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: url('https://i.imgur.com/XsYjq02.jpg') no-repeat center center fixed;
             background-size: cover;
             color: white;
-            text-align: center;
             margin: 0;
-            padding: 20px;
-            overflow-x: hidden;
+            padding: 0;
         }
+        
         .container {
-            max-width: 900px;
+            max-width: 1200px;
             margin: 0 auto;
-            background-color: rgba(0, 0, 0, 0.8);
-            border-radius: 15px;
             padding: 20px;
-            box-shadow: 0 0 30px rgba(0, 0, 0, 0.7);
-            border: 2px solid #5d5d5d;
+            background-color: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(5px);
         }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(to right, rgba(0,0,0,0.7), rgba(50,50,50,0.7));
+            border-bottom: 3px solid #f0a519;
+        }
+        
         h1 {
-            color: #f7d417;
-            text-shadow: 0 0 10px rgba(247, 212, 23, 0.5);
-            margin-bottom: 30px;
+            color: #f0a519;
+            font-size: 2.5rem;
+            margin: 0;
+            text-shadow: 2px 2px 4px #000;
         }
-        .dashboard {
+        
+        .filters {
             display: flex;
-            justify-content: space-between;
-            margin-bottom: 30px;
-            flex-wrap: wrap;
-        }
-        .player-stats, .enemy-stats {
-            background-color: rgba(50, 50, 50, 0.7);
-            padding: 15px;
-            border-radius: 10px;
-            width: 48%;
-            min-width: 300px;
-            margin-bottom: 15px;
-        }
-        .health-bar, .ammo-bar {
-            height: 20px;
-            background-color: #333;
-            border-radius: 10px;
-            margin: 10px 0;
-            overflow: hidden;
-        }
-        #playerHealth, #enemyHealth {
-            height: 100%;
-            width: 100%;
-            background: linear-gradient(to right, #4CAF50, #8BC34A);
-            transition: width 0.5s;
-        }
-        #enemyHealth {
-            background: linear-gradient(to right, #F44336, #FF9800);
-        }
-        #playerAmmo, #playerFuel {
-            height: 100%;
-            width: 100%;
-            background: linear-gradient(to right, #2196F3, #03A9F4);
-            transition: width 0.5s;
-        }
-        .controls {
-            display: flex;
-            justify-content: center;
             flex-wrap: wrap;
             gap: 15px;
-            margin: 30px 0;
-        }
-        .control-btn {
-            background: linear-gradient(135deg, #ff8a00, #e52e71);
-            border: none;
-            color: white;
-            padding: 12px 25px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-            transition: all 0.3s;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            min-width: 150px;
-        }
-        .control-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
-        }
-        .control-btn:disabled {
-            background: #666;
-            transform: none;
-            box-shadow: none;
-            cursor: not-allowed;
-        }
-        .battle-log {
-            height: 200px;
-            overflow-y: auto;
-            background-color: rgba(0, 0, 0, 0.5);
-            border: 1px solid #444;
-            border-radius: 5px;
+            margin-bottom: 30px;
             padding: 15px;
-            text-align: left;
-            margin-top: 20px;
-            font-family: 'Courier New', monospace;
+            background-color: rgba(30, 30, 30, 0.8);
+            border-radius: 8px;
         }
-        .critical-hit {
-            color: #ff5252;
+        
+        select, button {
+            padding: 10px 15px;
+            border-radius: 5px;
+            border: none;
+            background-color: #333;
+            color: white;
             font-weight: bold;
+            cursor: pointer;
         }
-        .ammo-warning {
-            color: #ffeb3b;
-            font-weight: bold;
+        
+        button {
+            background-color: #f0a519;
+            color: #000;
+            transition: all 0.3s;
         }
-        .repair-info {
-            color: #4caf50;
-            font-weight: bold;
+        
+        button:hover {
+            background-color: #ffc107;
+            transform: translateY(-2px);
         }
-        .plane-icon {
-            font-size: 40px;
-            margin: 10px;
+        
+        .vehicle-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
         }
-        .battle-area {
-            position: relative;
-            height: 200px;
-            margin: 30px 0;
-            background-color: rgba(70, 70, 70, 0.3);
+        
+        .vehicle-card {
+            background: linear-gradient(to bottom right, rgba(40,40,40,0.8), rgba(20,20,20,0.9));
             border-radius: 10px;
             overflow: hidden;
+            transition: all 0.3s;
+            border-left: 5px solid;
         }
-        .plane {
-            position: absolute;
-            font-size: 30px;
-            transition: all 1s;
+        
+        .vehicle-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
         }
-        #playerPlane {
-            left: 20%;
-            bottom: 50px;
-        }
-        #enemyPlane {
-            right: 20%;
-            top: 50px;
-            transform: scaleX(-1);
-        }
-        .damage-effect {
-            position: absolute;
+        
+        .usa { border-color: var(--usa-blue); }
+        .germany { border-color: var(--germany-gray); }
+        .ussr { border-color: var(--ussr-red); }
+        .britain { border-color: var(--britain-green); }
+        .japan { border-color: var(--japan-red); }
+        
+        .vehicle-image {
             width: 100%;
-            height: 100%;
-            background-color: rgba(255, 0, 0, 0.3);
-            opacity: 0;
-            pointer-events: none;
+            height: 180px;
+            object-fit: cover;
+            border-bottom: 2px solid #444;
+        }
+        
+        .vehicle-info {
+            padding: 15px;
+        }
+        
+        .vehicle-name {
+            font-size: 1.3rem;
+            margin: 0 0 10px 0;
+            color: #f0a519;
+        }
+        
+        .vehicle-type {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .aircraft { background-color: #1e88e5; }
+        .tank { background-color: #43a047; }
+        
+        .vehicle-stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .stat {
+            background-color: rgba(255,255,255,0.1);
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .nation-flag {
+            width: 24px;
+            height: 16px;
+            vertical-align: middle;
+            margin-right: 5px;
+            border: 1px solid #444;
+        }
+        
+        .tier {
+            color: gold;
+            font-weight: bold;
+        }
+        
+        .no-results {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 50px;
+            font-size: 1.2rem;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>✈️ Simulador de Batalha Aérea - War Thunder</h1>
+        <header>
+            <h1>War Thunder - Enciclopédia de Veículos</h1>
+            <p>Todas as informações sobre aviões e tanques do War Thunder</p>
+        </header>
         
-        <div class="dashboard">
-            <div class="player-stats">
-                <h2>Seu Caça (P-51D Mustang)</h2>
-                <div class="plane-icon">✈️</div>
-                <p>Integridade: <span id="playerHealthValue">100</span>%</p>
-                <div class="health-bar">
-                    <div id="playerHealth" style="width: 100%;"></div>
-                </div>
-                <p>Munição: <span id="playerAmmoValue">100</span>%</p>
-                <div class="ammo-bar">
-                    <div id="playerAmmo" style="width: 100%;"></div>
-                </div>
-                <p>Combustível: <span id="playerFuelValue">100</span>%</p>
-                <div class="ammo-bar">
-                    <div id="playerFuel" style="width: 100%;"></div>
-                </div>
-            </div>
+        <div class="filters">
+            <select id="nationFilter">
+                <option value="all">Todas as Nações</option>
+                <option value="usa">USA</option>
+                <option value="germany">Alemanha</option>
+                <option value="ussr">URSS</option>
+                <option value="britain">Reino Unido</option>
+                <option value="japan">Japão</option>
+            </select>
             
-            <div class="enemy-stats">
-                <h2>Inimigo (Bf 109 G-6)</h2>
-                <div class="plane-icon">✈️</div>
-                <p>Integridade: <span id="enemyHealthValue">100</span>%</p>
-                <div class="health-bar">
-                    <div id="enemyHealth" style="width: 100%;"></div>
-                </div>
-                <p>Estado: <span id="enemyStatus">Operacional</span></p>
-            </div>
+            <select id="typeFilter">
+                <option value="all">Todos os Tipos</option>
+                <option value="aircraft">Aviões</option>
+                <option value="tank">Tanques</option>
+            </select>
+            
+            <select id="tierFilter">
+                <option value="all">Todos os Tiers</option>
+                <option value="1">Tier I</option>
+                <option value="2">Tier II</option>
+                <option value="3">Tier III</option>
+                <option value="4">Tier IV</option>
+                <option value="5">Tier V</option>
+                <option value="6">Tier VI</option>
+                <option value="7">Tier VII</option>
+            </select>
+            
+            <button id="resetFilters">Limpar Filtros</button>
         </div>
         
-        <div class="battle-area">
-            <div id="playerPlane" class="plane">✈️</div>
-            <div id="enemyPlane" class="plane">✈️</div>
-            <div id="damageEffect" class="damage-effect"></div>
-        </div>
-        
-        <div class="controls">
-            <button class="control-btn" onclick="attack('machinegun')">🔫 Metralhadoras (1% munição)</button>
-            <button class="control-btn" onclick="attack('cannon')">💥 Canhão (5% munição)</button>
-            <button class="control-btn" onclick="maneuver('evade')">🔄 Manobra Evasiva</button>
-            <button class="control-btn" onclick="maneuver('pursuit')">🎯 Perseguição</button>
-            <button class="control-btn" onclick="repair()">🔧 Reparar (20s)</button>
-        </div>
-        
-        <div class="battle-log" id="battleLog">
-            Batalha iniciada! Encontramos um caça inimigo.
+        <div class="vehicle-grid" id="vehicleGrid">
+            <!-- Veículos serão inseridos aqui via JavaScript -->
         </div>
     </div>
 
     <script>
-        // Status do jogador
-        const player = {
-            health: 100,
-            ammo: 100,
-            fuel: 100,
-            isRepairing: false,
-            plane: 'P-51D Mustang',
-            weapons: {
-                machinegun: { damage: 2, ammoCost: 1 },
-                cannon: { damage: 8, ammoCost: 5 }
-            }
-        };
-        
-        // Status do inimigo
-        const enemy = {
-            health: 100,
-            plane: 'Bf 109 G-6',
-            accuracy: 0.4,
-            attackInterval: null
-        };
-        
-        // Inicia o ataque inimigo
-        enemy.attackInterval = setInterval(enemyAttack, 3000);
-        
-        // Atualiza a interface
-        function updateUI() {
-            document.getElementById('playerHealthValue').textContent = player.health;
-            document.getElementById('playerHealth').style.width = `${player.health}%`;
-            document.getElementById('playerAmmoValue').textContent = player.ammo;
-            document.getElementById('playerAmmo').style.width = `${player.ammo}%`;
-            document.getElementById('playerFuelValue').textContent = player.fuel;
-            document.getElementById('playerFuel').style.width = `${player.fuel}%`;
-            
-            document.getElementById('enemyHealthValue').textContent = enemy.health;
-            document.getElementById('enemyHealth').style.width = `${enemy.health}%`;
-            
-            // Desativa botões se necessário
-            document.querySelectorAll('.control-btn').forEach(btn => {
-                if (player.health <= 0 || enemy.health <= 0) {
-                    btn.disabled = true;
+        // Banco de dados de veículos
+        const vehicles = [
+            // Aviões USA
+            {
+                id: 1,
+                name: "P-51D-5 Mustang",
+                nation: "usa",
+                type: "aircraft",
+                tier: 4,
+                image: "https://i.imgur.com/JZQv1Wp.jpg",
+                br: 4.3,
+                year: 1944,
+                characteristics: {
+                    armamento: "6x Metralhadoras .50 cal",
+                    velocidade: "703 km/h",
+                    motor: "Packard V-1650-7",
+                    tripulação: 1
                 }
-            });
+            },
+            {
+                id: 2,
+                name: "F-86F-2 Sabre",
+                nation: "usa",
+                type: "aircraft",
+                tier: 5,
+                image: "https://i.imgur.com/KLmW5Xx.jpg",
+                br: 9.0,
+                year: 1953,
+                characteristics: {
+                    armamento: "2x Canhões 20mm",
+                    velocidade: "1,106 km/h",
+                    motor: "General Electric J47-GE-27",
+                    tripulação: 1
+                }
+            },
             
-            // Verifica combustível
-            if (player.fuel <= 0) {
-                addToLog("⚠️ SEM COMBUSTÍVEL! Você está caindo!", "ammo-warning");
-                player.health = 0;
-                updateUI();
+            // Tanques USA
+            {
+                id: 3,
+                name: "M4A3E2 (76) W Sherman 'Jumbo'",
+                nation: "usa",
+                type: "tank",
+                tier: 4,
+                image: "https://i.imgur.com/vVpR3Xq.jpg",
+                br: 6.3,
+                year: 1944,
+                characteristics: {
+                    armamento: "Canhão 76mm M1A1",
+                    blindagem: "Frontal: 101-152mm",
+                    motor: "Ford GAA V8 450hp",
+                    tripulação: 5
+                }
+            },
+            
+            // Aviões Alemanha
+            {
+                id: 4,
+                name: "Bf 109 G-6",
+                nation: "germany",
+                type: "aircraft",
+                tier: 4,
+                image: "https://i.imgur.com/9XzTJdN.jpg",
+                br: 4.7,
+                year: 1943,
+                characteristics: {
+                    armamento: "1x Canhão 20mm, 2x MG 131",
+                    velocidade: "640 km/h",
+                    motor: "Daimler-Benz DB 605A",
+                    tripulação: 1
+                }
+            },
+            
+            // Tanques Alemanha
+            {
+                id: 5,
+                name: "Tiger II (H)",
+                nation: "germany",
+                type: "tank",
+                tier: 5,
+                image: "https://i.imgur.com/8YwDZQe.jpg",
+                br: 6.7,
+                year: 1944,
+                characteristics: {
+                    armamento: "Canhão KwK 43 88mm",
+                    blindagem: "Frontal: 185-150mm",
+                    motor: "Maybach HL 230 P30",
+                    tripulação: 5
+                }
+            },
+            
+            // Aviões URSS
+            {
+                id: 6,
+                name: "Yak-3",
+                nation: "ussr",
+                type: "aircraft",
+                tier: 4,
+                image: "https://i.imgur.com/5XWtYqL.jpg",
+                br: 4.7,
+                year: 1944,
+                characteristics: {
+                    armamento: "1x Canhão 20mm, 2x Metralhadoras 12.7mm",
+                    velocidade: "655 km/h",
+                    motor: "Klimov VK-105PF-2",
+                    tripulação: 1
+                }
+            },
+            
+            // Tanques URSS
+            {
+                id: 7,
+                name: "T-34-85 (D-5T)",
+                nation: "ussr",
+                type: "tank",
+                tier: 4,
+                image: "https://i.imgur.com/qzYVWXx.jpg",
+                br: 5.7,
+                year: 1944,
+                characteristics: {
+                    armamento: "Canhão 85mm D-5T",
+                    blindagem: "Frontal: 45mm",
+                    motor: "V-2-34 500hp",
+                    tripulação: 5
+                }
+            },
+            
+            // Aviões Reino Unido
+            {
+                id: 8,
+                name: "Spitfire LF Mk.IX",
+                nation: "britain",
+                type: "aircraft",
+                tier: 4,
+                image: "https://i.imgur.com/8sQbXJk.jpg",
+                br: 5.0,
+                year: 1943,
+                characteristics: {
+                    armamento: "2x Canhões 20mm, 4x Metralhadoras 7.7mm",
+                    velocidade: "650 km/h",
+                    motor: "Rolls-Royce Merlin 66",
+                    tripulação: 1
+                }
+            },
+            
+            // Tanques Reino Unido
+            {
+                id: 9,
+                name: "Centurion Mk.3",
+                nation: "britain",
+                type: "tank",
+                tier: 5,
+                image: "https://i.imgur.com/9ZkXwYh.jpg",
+                br: 7.3,
+                year: 1948,
+                characteristics: {
+                    armamento: "Canhão 20 pdr (84mm)",
+                    blindagem: "Frontal: 76-152mm",
+                    motor: "Rolls-Royce Meteor Mk.4B",
+                    tripulação: 4
+                }
+            },
+            
+            // Aviões Japão
+            {
+                id: 10,
+                name: "A6M5 Ko Reisen",
+                nation: "japan",
+                type: "aircraft",
+                tier: 4,
+                image: "https://i.imgur.com/5tJbX9Q.jpg",
+                br: 4.7,
+                year: 1943,
+                characteristics: {
+                    armamento: "2x Canhões 20mm, 2x Metralhadoras 7.7mm",
+                    velocidade: "560 km/h",
+                    motor: "Nakajima Sakae 21",
+                    tripulação: 1
+                }
             }
-        }
-        
-        // Adiciona mensagem ao log
-        function addToLog(message, className = "") {
-            const log = document.getElementById('battleLog');
-            const entry = document.createElement('div');
-            entry.className = className;
-            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
-            log.appendChild(entry);
-            log.scrollTop = log.scrollHeight;
-        }
-        
-        // Ataque do jogador
-        function attack(type) {
-            if (player.ammo <= 0) {
-                addToLog("SEM MUNIÇÃO! Recarregue ou use outra arma.", "ammo-warning");
+        ];
+
+        // Função para renderizar os veículos
+        function renderVehicles(filteredVehicles = vehicles) {
+            const grid = document.getElementById('vehicleGrid');
+            grid.innerHTML = '';
+            
+            if (filteredVehicles.length === 0) {
+                grid.innerHTML = '<div class="no-results">Nenhum veículo encontrado com os filtros selecionados</div>';
                 return;
             }
             
-            const weapon = player.weapons[type];
-            let damage = weapon.damage;
-            
-            // Chance de crítico (20%)
-            if (Math.random() < 0.2) {
-                damage *= 1.5;
-                damage = Math.floor(damage);
-                addToLog(`CRÍTICO! Você causou ${damage} de dano com ${type === 'machinegun' ? 'metralhadoras' : 'canhão'}!`, "critical-hit");
-            } else {
-                addToLog(`Você causou ${damage} de dano com ${type === 'machinegun' ? 'metralhadoras' : 'canhão'}.`);
-            }
-            
-            enemy.health -= damage;
-            player.ammo -= weapon.ammoCost;
-            
-            // Efeito visual
-            const enemyPlane = document.getElementById('enemyPlane');
-            enemyPlane.style.transform = 'scaleX(-1) translateY(-20px)';
-            setTimeout(() => {
-                enemyPlane.style.transform = 'scaleX(-1)';
-            }, 300);
-            
-            // Verifica se inimigo foi abatido
-            if (enemy.health <= 0) {
-                enemy.health = 0;
-                document.getElementById('enemyStatus').textContent = "Abatido";
-                clearInterval(enemy.attackInterval);
-                addToLog("🎉 INIMIGO ABATIDO! MISSÃO CUMPRIDA!", "critical-hit");
-            }
-            
-            updateUI();
-        }
-        
-        // Ataque do inimigo
-        function enemyAttack() {
-            if (enemy.health <= 0 || player.health <= 0) return;
-            
-            // Chance de acerto baseada na precisão do inimigo
-            if (Math.random() < enemy.accuracy) {
-                const damage = Math.floor(Math.random() * 15) + 5;
-                player.health -= damage;
+            filteredVehicles.forEach(vehicle => {
+                const card = document.createElement('div');
+                card.className = `vehicle-card ${vehicle.nation}`;
                 
-                // Efeito visual de dano
-                const damageEffect = document.getElementById('damageEffect');
-                damageEffect.style.opacity = 1;
-                setTimeout(() => {
-                    damageEffect.style.opacity = 0;
-                }, 300);
-                
-                addToLog(`Inimigo te atingiu! Você perdeu ${damage}% de integridade.`, "critical-hit");
-                
-                // Movimento do avião inimigo
-                const enemyPlane = document.getElementById('enemyPlane');
-                enemyPlane.style.transform = 'scaleX(-1) translateY(20px)';
-                setTimeout(() => {
-                    enemyPlane.style.transform = 'scaleX(-1)';
-                }, 300);
-                
-                // Verifica se jogador foi abatido
-                if (player.health <= 0) {
-                    player.health = 0;
-                    addToLog("💥 SEU AVIÃO FOI DESTRUÍDO!", "critical-hit");
+                // Determina a bandeira da nação
+                let flagSrc = '';
+                switch(vehicle.nation) {
+                    case 'usa': flagSrc = 'https://i.imgur.com/9JxQZbC.png'; break;
+                    case 'germany': flagSrc = 'https://i.imgur.com/4J1vQ7b.png'; break;
+                    case 'ussr': flagSrc = 'https://i.imgur.com/3ZQvX9b.png'; break;
+                    case 'britain': flagSrc = 'https://i.imgur.com/5XWtYqL.png'; break;
+                    case 'japan': flagSrc = 'https://i.imgur.com/8sQbXJk.png'; break;
                 }
                 
-                updateUI();
-            } else {
-                addToLog("Inimigo disparou, mas errou!");
-            }
+                // Constrói o HTML do card
+                card.innerHTML = `
+                    <img src="${vehicle.image}" alt="${vehicle.name}" class="vehicle-image">
+                    <div class="vehicle-info">
+                        <h3 class="vehicle-name">
+                            <img src="${flagSrc}" class="nation-flag">
+                            ${vehicle.name}
+                        </h3>
+                        <div>
+                            <span class="vehicle-type ${vehicle.type}">
+                                ${vehicle.type === 'aircraft' ? 'Avião' : 'Tanque'}
+                            </span>
+                            <span class="tier">Tier ${vehicle.tier}</span>
+                            <span class="tier">BR ${vehicle.br}</span>
+                        </div>
+                        
+                        <div class="vehicle-stats">
+                            <div class="stat">Ano: ${vehicle.year}</div>
+                            ${vehicle.type === 'aircraft' ? 
+                                `<div class="stat">Velocidade: ${vehicle.characteristics.velocidade}</div>` : 
+                                `<div class="stat">Blindagem: ${vehicle.characteristics.blindagem}</div>`}
+                            <div class="stat">Armamento: ${vehicle.characteristics.armamento}</div>
+                            <div class="stat">Tripulação: ${vehicle.characteristics.tripulação}</div>
+                        </div>
+                    </div>
+                `;
+                
+                grid.appendChild(card);
+            });
         }
         
-        // Manobras
-        function maneuver(type) {
-            if (player.fuel <= 0) return;
+        // Função para aplicar filtros
+        function applyFilters() {
+            const nation = document.getElementById('nationFilter').value;
+            const type = document.getElementById('typeFilter').value;
+            const tier = document.getElementById('tierFilter').value;
             
-            player.fuel -= 2;
+            const filtered = vehicles.filter(vehicle => {
+                return (nation === 'all' || vehicle.nation === nation) &&
+                       (type === 'all' || vehicle.type === type) &&
+                       (tier === 'all' || vehicle.tier.toString() === tier);
+            });
             
-            if (type === 'evade') {
-                enemy.accuracy = 0.2; // Reduz precisão inimiga temporariamente
-                addToLog("Você realizou uma manobra evasiva! Inimigo terá mais dificuldade em te acertar.");
-                
-                // Efeito visual
-                const playerPlane = document.getElementById('playerPlane');
-                playerPlane.style.transform = 'rotate(30deg)';
-                setTimeout(() => {
-                    playerPlane.style.transform = 'rotate(0)';
-                }, 500);
-                
-                setTimeout(() => {
-                    enemy.accuracy = 0.4;
-                }, 3000);
-            } else {
-                enemy.accuracy = 0.6; // Aumenta chance de acerto do jogador
-                addToLog("Você entrou em perseguição! Sua próxima chance de acerto aumenta.");
-                
-                setTimeout(() => {
-                    enemy.accuracy = 0.4;
-                }, 2000);
-            }
-            
-            updateUI();
+            renderVehicles(filtered);
         }
         
-        // Reparo
-        function repair() {
-            if (player.isRepairing) return;
-            
-            player.isRepairing = true;
-            const repairTime = 20000; // 20 segundos
-            const startTime = Date.now();
-            
-            addToLog("Iniciando reparos (20 segundos)...", "repair-info");
-            
-            const repairInterval = setInterval(() => {
-                const elapsed = Date.now() - startTime;
-                const remaining = Math.max(0, repairTime - elapsed);
-                
-                if (remaining <= 0) {
-                    clearInterval(repairInterval);
-                    player.health = Math.min(100, player.health + 40);
-                    player.isRepairing = false;
-                    addToLog("Reparos completos! +40% de integridade.", "repair-info");
-                    updateUI();
-                }
-            }, 1000);
-        }
+        // Event listeners
+        document.getElementById('nationFilter').addEventListener('change', applyFilters);
+        document.getElementById('typeFilter').addEventListener('change', applyFilters);
+        document.getElementById('tierFilter').addEventListener('change', applyFilters);
+        document.getElementById('resetFilters').addEventListener('click', () => {
+            document.getElementById('nationFilter').value = 'all';
+            document.getElementById('typeFilter').value = 'all';
+            document.getElementById('tierFilter').value = 'all';
+            renderVehicles();
+        });
         
-        // Consumo de combustível
-        setInterval(() => {
-            if (player.health > 0 && enemy.health > 0) {
-                player.fuel -= 0.5;
-                updateUI();
-                
-                if (player.fuel <= 20 && player.fuel > 0) {
-                    addToLog("⚠️ ATENÇÃO: Combustível acabando!", "ammo-warning");
-                }
-            }
-        }, 1000);
+        // Renderiza inicialmente
+        renderVehicles();
     </script>
 </body>
 </html>
