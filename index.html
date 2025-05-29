@@ -3,105 +3,286 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fortnite Stats Simulator</title>
+    <title>Simulador de Construção - Fortnite</title>
     <style>
         body {
             font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            background: linear-gradient(to bottom, #4b6cb7, #182848);
             color: white;
             text-align: center;
+            margin: 0;
             padding: 20px;
+            overflow-x: hidden;
         }
         .container {
+            max-width: 800px;
+            margin: 0 auto;
             background-color: rgba(0, 0, 0, 0.7);
             border-radius: 15px;
             padding: 20px;
-            max-width: 600px;
-            margin: 0 auto;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.6);
         }
-        button {
-            background-color: #FF4500;
-            color: white;
-            border: none;
+        h1 {
+            color: #f7d417;
+            text-shadow: 0 0 10px rgba(247, 212, 23, 0.5);
+        }
+        .resources {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            font-size: 18px;
+        }
+        .resource {
             padding: 10px 20px;
-            margin: 10px;
-            border-radius: 5px;
+            border-radius: 10px;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .build-buttons {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 30px 0;
+        }
+        .build-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 50px;
             cursor: pointer;
+            font-size: 16px;
             font-weight: bold;
-            transition: transform 0.2s;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
         }
-        button:hover {
-            transform: scale(1.05);
-            background-color: #FF6347;
+        .build-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
         }
-        #lootResult {
-            margin: 20px;
-            padding: 10px;
-            border: 2px dashed gold;
-            min-height: 50px;
+        .build-btn:disabled {
+            background: #666;
+            transform: none;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+        .construction-area {
+            height: 300px;
+            width: 100%;
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            margin: 20px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        .structure {
+            position: absolute;
+            transition: all 0.5s;
+        }
+        .wall {
+            background-color: rgba(255, 255, 255, 0.8);
+            border: 2px solid #ddd;
+        }
+        .ramp {
+            background: linear-gradient(to bottom right, transparent 49%, rgba(255, 255, 255, 0.8) 50%);
+        }
+        .floor {
+            background-color: rgba(255, 255, 255, 0.6);
+        }
+        .edit-btn {
+            background: linear-gradient(135deg, #f7d417, #f5a623);
+            margin-top: 20px;
+        }
+        .harvest-btn {
+            background: linear-gradient(135deg, #4CAF50, #2E8B57);
+            margin-top: 10px;
+        }
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.5s;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Fortnite Stats Simulator</h1>
+        <h1>🏗️ Simulador de Construção - Fortnite</h1>
         
-        <h2>Contador de Vitórias</h2>
-        <p id="wins">0</p>
-        <button onclick="addWin()">Adicionar Vitória!</button>
+        <div class="resources">
+            <div class="resource">Madeira: <span id="wood">200</span></div>
+            <div class="resource">Pedra: <span id="stone">150</span></div>
+            <div class="resource">Metal: <span id="metal">100</span></div>
+        </div>
         
-        <h2>Simulador de Loot</h2>
-        <button onclick="openLoot()">Abrir Baú!</button>
-        <div id="lootResult">Clique no baú para ver o que você ganhou!</div>
+        <div class="build-buttons">
+            <button class="build-btn" onclick="build('wall')">🧱 Parede (10 madeira)</button>
+            <button class="build-btn" onclick="build('ramp')">🔼 Rampa (15 madeira)</button>
+            <button class="build-btn" onclick="build('floor')">📦 Piso (20 pedra)</button>
+            <button class="build-btn" onclick="build('tower')">🏰 Torre (30 pedra)</button>
+            <button class="build-btn edit-btn" onclick="editMode()">✏️ Modo Edição</button>
+            <button class="build-btn harvest-btn" onclick="harvest()">⛏️ Coletar Materiais (+50)</button>
+        </div>
+        
+        <div class="construction-area" id="constructionArea"></div>
     </div>
+    
+    <div class="notification" id="notification"></div>
 
     <script>
-        // Contador de vitórias
-        let wins = 0;
-        function addWin() {
-            wins++;
-            document.getElementById('wins').textContent = wins;
+        let resources = {
+            wood: 200,
+            stone: 150,
+            metal: 100
+        };
+        
+        let editModeActive = false;
+        let structureCount = 0;
+        
+        function updateResources() {
+            document.getElementById('wood').textContent = resources.wood;
+            document.getElementById('stone').textContent = resources.stone;
+            document.getElementById('metal').textContent = resources.metal;
         }
-
-        // Simulador de loot
-        const lootItems = [
-            "Pistola Comum",
-            "Fuzil Épico (SCAR)",
-            "Sniper Lendária",
-            "Poção de Escudo",
-            "Granadas",
-            "Míticas: Espada do Thanos!",
-            "Balões de Fumaça",
-            "Arco Épico",
-            "Colete de Vida Raro"
-        ];
-
-        function openLoot() {
-            const resultDiv = document.getElementById('lootResult');
-            // Efeito de "carregamento"
-            resultDiv.textContent = "Abrindo...";
+        
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.style.opacity = 1;
             
             setTimeout(() => {
-                const randomIndex = Math.floor(Math.random() * lootItems.length);
-                const rarityColors = {
-                    "Comum": "gray",
-                    "Raro": "blue",
-                    "Épico": "purple",
-                    "Lendária": "gold",
-                    "Míticas": "orange"
+                notification.style.opacity = 0;
+            }, 2000);
+        }
+        
+        function build(type) {
+            let cost = {};
+            let structureClass = '';
+            let structureHtml = '';
+            let width = 0, height = 0;
+            
+            switch(type) {
+                case 'wall':
+                    if (resources.wood < 10) {
+                        showNotification("❌ Madeira insuficiente!");
+                        return;
+                    }
+                    cost.wood = 10;
+                    structureClass = 'wall';
+                    width = 80;
+                    height = 120;
+                    structureHtml = '🧱';
+                    break;
+                    
+                case 'ramp':
+                    if (resources.wood < 15) {
+                        showNotification("❌ Madeira insuficiente!");
+                        return;
+                    }
+                    cost.wood = 15;
+                    structureClass = 'ramp';
+                    width = 120;
+                    height = 80;
+                    structureHtml = '🔼';
+                    break;
+                    
+                case 'floor':
+                    if (resources.stone < 20) {
+                        showNotification("❌ Pedra insuficiente!");
+                        return;
+                    }
+                    cost.stone = 20;
+                    structureClass = 'floor';
+                    width = 150;
+                    height = 150;
+                    structureHtml = '📦';
+                    break;
+                    
+                case 'tower':
+                    if (resources.stone < 30) {
+                        showNotification("❌ Pedra insuficiente!");
+                        return;
+                    }
+                    cost.stone = 30;
+                    structureClass = 'wall';
+                    width = 100;
+                    height = 200;
+                    structureHtml = '🏰';
+                    break;
+            }
+            
+            // Deduz recursos
+            for (const [material, amount] of Object.entries(cost)) {
+                resources[material] -= amount;
+            }
+            updateResources();
+            
+            // Cria estrutura
+            const constructionArea = document.getElementById('constructionArea');
+            const structure = document.createElement('div');
+            structure.className = `structure ${structureClass}`;
+            structure.id = `structure-${structureCount++}`;
+            structure.innerHTML = structureHtml;
+            
+            // Posição aleatória
+            const maxX = constructionArea.offsetWidth - width;
+            const maxY = constructionArea.offsetHeight - height;
+            
+            structure.style.width = `${width}px`;
+            structure.style.height = `${height}px`;
+            structure.style.left = `${Math.random() * maxX}px`;
+            structure.style.top = `${Math.random() * maxY}px`;
+            
+            if (editModeActive) {
+                structure.style.cursor = 'pointer';
+                structure.onclick = function() {
+                    this.remove();
+                    // Devolve 50% dos recursos
+                    for (const [material, amount] of Object.entries(cost)) {
+                        resources[material] += Math.floor(amount * 0.5);
+                    }
+                    updateResources();
+                    showNotification("♻️ Estrutura destruída! 50% dos materiais recuperados");
                 };
-                
-                const item = lootItems[randomIndex];
-                let rarity = "Comum";
-                
-                if (item.includes("Épico")) rarity = "Épico";
-                else if (item.includes("Raro")) rarity = "Raro";
-                else if (item.includes("Lendária")) rarity = "Lendária";
-                else if (item.includes("Míticas")) rarity = "Míticas";
-                
-                resultDiv.innerHTML = `<span style="color: ${rarityColors[rarity]}; font-weight: bold;">${item}</span>`;
-            }, 1000);
+            }
+            
+            constructionArea.appendChild(structure);
+            showNotification(`✅ ${type} construído!`);
+        }
+        
+        function editMode() {
+            editModeActive = !editModeActive;
+            const structures = document.querySelectorAll('.structure');
+            
+            if (editModeActive) {
+                showNotification("✏️ Modo edição ativado - Clique nas estruturas para remover");
+                structures.forEach(struct => {
+                    struct.style.cursor = 'pointer';
+                    struct.style.boxShadow = '0 0 10px yellow';
+                });
+            } else {
+                showNotification("🚧 Modo edição desativado");
+                structures.forEach(struct => {
+                    struct.style.cursor = 'default';
+                    struct.style.boxShadow = 'none';
+                });
+            }
+        }
+        
+        function harvest() {
+            resources.wood += 50;
+            resources.stone += 50;
+            resources.metal += 50;
+            updateResources();
+            showNotification("⛏️ +50 materiais de todos os tipos!");
         }
     </script>
 </body>
